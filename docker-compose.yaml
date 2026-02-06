@@ -1,0 +1,35 @@
+name: www-deployer
+
+services:
+  deployer:
+    build: .
+    container_name: www-deployer
+    volumes:
+      - repos:/repos
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - PORT=9000
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_API_URL=${INFISICAL_API_URL}
+      - INFISICAL_WORKSPACE_ID=${INFISICAL_WORKSPACE_ID}
+      - INFISICAL_ENV=${INFISICAL_ENV}
+      - INFISICAL_PATH=${INFISICAL_PATH}
+    ports:
+      - "${WWW_GIT_DEPLOY_PORT:-9009}:9000"
+    restart: unless-stopped
+    command: 
+      - /bin/sh
+      - -c
+      - |
+        export INFISICAL_TOKEN=$$(infisical login --method=universal-auth --client-id=$$INFISICAL_CLIENT_ID --client-secret=$$INFISICAL_CLIENT_SECRET --silent --plain --domain=$$INFISICAL_API_URL)
+        export DOCKER_NETWORK=www-deployer_default
+        infisical run --projectId $$INFISICAL_WORKSPACE_ID --domain $$INFISICAL_API_URL --env $$INFISICAL_ENV --path $$INFISICAL_PATH -- node app.js
+
+volumes:
+  repos:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${WWW_GIT_REPOS_PATH:-/mnt/pve/nfs-cellect-repos}

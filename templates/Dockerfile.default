@@ -1,0 +1,15 @@
+FROM node:${NODE_VERSION}-alpine
+
+WORKDIR /app
+
+# Copy application files
+COPY . .
+
+# Build the application
+RUN ${BUILD_CMD}
+
+# Expose port 3000 (internal container port)
+EXPOSE 3000
+
+# Start the application
+CMD ${SERVE_CMD}

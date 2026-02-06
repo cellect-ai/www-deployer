@@ -1,0 +1,12 @@
+{
+  "sites": [
+    {
+      "repo": "cellect-ai/www-v0",
+      "branch": "main",
+      "port": 9090,
+      "container_name": "www-v0",
+      "domain": "preview.shape-technology.com",
+      "node_version": "22"
+    }
+  ]
+}
