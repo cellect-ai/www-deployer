@@ -1,0 +1,15 @@
+---
+description: When working on www-deployer (git deployer), read AGENTS.md for context
+globs: **/*
+alwaysApply: false
+---
+
+# www-deployer (git deployer)
+
+When working in this project, **read `AGENTS.md`** in this directory first for:
+
+- What the service does and how deploy flow works
+- Key files: `sites.json`, `app.js`, `manage.sh`, `templates/Dockerfile.default`
+- How to add a new site, configure webhooks, and troubleshoot
+
+Use AGENTS.md as the source of truth for config, paths, and procedures.

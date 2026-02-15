@@ -1,5 +1,9 @@
 FROM node:${NODE_VERSION}-alpine
 
+RUN apk add --no-cache curl bash && \
+    curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.alpine.sh' | bash && \
+    apk add --no-cache infisical
+
 WORKDIR /app
 
 # Copy application files

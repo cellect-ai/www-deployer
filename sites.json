@@ -1,12 +1,82 @@
 {
   "sites": [
     {
-      "repo": "cellect-ai/www-v0",
+      "repo": "cellect-ai/www-shape-designs",
       "branch": "main",
       "port": 9090,
-      "container_name": "www-v0",
+      "container_name": "www_shape_designs",
       "domain": "preview.shape-technology.com",
-      "node_version": "22"
+      "node_version": "22",
+      "serve_cmd": "pnpm run start",
+      "infisical_project_id": "c02fbd52-519b-4fff-b83f-a35df765d967",
+      "infisical_env": "prod",
+      "infisical_path": "/sites/www-shape-designs",
+      "infisical_api_url": "https://sops.ops.cellect.ai/"
+    },
+    {
+      "repo": "cellect-ai/www-shape-designs",
+      "branch": "preview",
+      "port": 9092,
+      "container_name": "www_shape_designs_staging",
+      "domain": "staging.shape-designs.com",
+      "node_version": "22",
+      "serve_cmd": "pnpm run start",
+      "infisical_project_id": "c02fbd52-519b-4fff-b83f-a35df765d967",
+      "infisical_env": "staging",
+      "infisical_path": "/sites/www-shape-designs",
+      "infisical_api_url": "https://sops.ops.cellect.ai/"
+    },
+    {
+      "repo": "cellect-ai/www-shape-technology",
+      "branch": "main",
+      "port": 9091,
+      "container_name": "www_shape_technology",
+      "domain": "shape-technology.com",
+      "node_version": "22",
+      "build_cmd": "echo 'Static site - no build'",
+      "serve_cmd": "npx serve -l 3000",
+      "infisical_project_id": "c02fbd52-519b-4fff-b83f-a35df765d967",
+      "infisical_env": "prod",
+      "infisical_path": "/sites/www-shape-technology",
+      "infisical_api_url": "https://sops.ops.cellect.ai/"
+    },
+    {
+      "repo": "cellect-ai/www-shape-technology",
+      "branch": "preview",
+      "port": 9093,
+      "container_name": "www_shape_technology_staging",
+      "domain": "staging.shape-technology.com",
+      "node_version": "22",
+      "build_cmd": "echo 'Static site - no build'",
+      "serve_cmd": "npx serve -l 3000",
+      "infisical_project_id": "c02fbd52-519b-4fff-b83f-a35df765d967",
+      "infisical_env": "staging",
+      "infisical_path": "/sites/www-shape-technology",
+      "infisical_api_url": "https://sops.ops.cellect.ai/"
+    },
+    {
+      "repo": "cellect-ai/www-shape-equity",
+      "branch": "main",
+      "port": 9094,
+      "container_name": "www_shape_equity",
+      "domain": "shape-equity.com",
+      "node_version": "22",
+      "infisical_project_id": "c02fbd52-519b-4fff-b83f-a35df765d967",
+      "infisical_env": "prod",
+      "infisical_path": "/sites/www-shape-equity",
+      "infisical_api_url": "https://sops.ops.cellect.ai/"
+    },
+    {
+      "repo": "cellect-ai/www-shape-equity",
+      "branch": "preview",
+      "port": 9095,
+      "container_name": "www_shape_equity_staging",
+      "domain": "staging.shape-equity.com",
+      "node_version": "22",
+      "infisical_project_id": "c02fbd52-519b-4fff-b83f-a35df765d967",
+      "infisical_env": "staging",
+      "infisical_path": "/sites/www-shape-equity",
+      "infisical_api_url": "https://sops.ops.cellect.ai/"
     }
   ]
 }

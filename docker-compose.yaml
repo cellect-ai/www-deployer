@@ -7,6 +7,7 @@ services:
     volumes:
       - repos:/repos
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./sites.json:/app/sites.json:ro
     environment:
       - PORT=9000
       - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
@@ -15,6 +16,8 @@ services:
       - INFISICAL_WORKSPACE_ID=${INFISICAL_WORKSPACE_ID}
       - INFISICAL_ENV=${INFISICAL_ENV}
       - INFISICAL_PATH=${INFISICAL_PATH}
+      - WWW_DEPLOYER_LOG_MAX_BYTES=${WWW_DEPLOYER_LOG_MAX_BYTES:-52428800}
+      - WWW_DEPLOYER_LOG_KEEP_FILES=${WWW_DEPLOYER_LOG_KEEP_FILES:-10}
     ports:
       - "${WWW_GIT_DEPLOY_PORT:-9009}:9000"
     restart: unless-stopped
@@ -22,9 +25,23 @@ services:
       - /bin/sh
       - -c
       - |
+        LOG_DIR=/repos/_www_deployer_logs
+        mkdir -p "$$LOG_DIR"
+        LOG_FILE="$$LOG_DIR/www-deployer.log"
+        MAX_BYTES=$${WWW_DEPLOYER_LOG_MAX_BYTES:-52428800}
+        KEEP_FILES=$${WWW_DEPLOYER_LOG_KEEP_FILES:-10}
+        if [ -f "$$LOG_FILE" ]; then
+          CURRENT_SIZE=$$(wc -c < "$$LOG_FILE" 2>/dev/null || echo 0)
+          if [ "$$CURRENT_SIZE" -ge "$$MAX_BYTES" ]; then
+            ROTATED_FILE="$$LOG_DIR/www-deployer-$$(date -u +%Y%m%dT%H%M%SZ).log"
+            mv "$$LOG_FILE" "$$ROTATED_FILE"
+          fi
+        fi
+        ls -1t "$$LOG_DIR"/www-deployer-*.log 2>/dev/null | awk "NR>$$KEEP_FILES" | xargs -r rm -f
+        touch "$$LOG_FILE"
         export INFISICAL_TOKEN=$$(infisical login --method=universal-auth --client-id=$$INFISICAL_CLIENT_ID --client-secret=$$INFISICAL_CLIENT_SECRET --silent --plain --domain=$$INFISICAL_API_URL)
         export DOCKER_NETWORK=www-deployer_default
-        infisical run --projectId $$INFISICAL_WORKSPACE_ID --domain $$INFISICAL_API_URL --env $$INFISICAL_ENV --path $$INFISICAL_PATH -- node app.js
+        infisical run --projectId $$INFISICAL_WORKSPACE_ID --domain $$INFISICAL_API_URL --env $$INFISICAL_ENV --path $$INFISICAL_PATH -- node app.js 2>&1 | while IFS= read -r line; do printf '%s %s\n' "$$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$$line"; done | tee -a "$$LOG_FILE"
 
 volumes:
   repos:

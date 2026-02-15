@@ -41,6 +41,16 @@ WEBHOOK_URL="https://ops.cellect.ai/git_www/hooks"
 # Read sites from sites.json
 SITES=$(jq -r '.sites[] | @base64' sites.json)
 
+get_branches() {
+    local site="$1"
+    local branches
+    branches=$(echo "$site" | base64 -d | jq -r 'if (.branches // empty) then (.branches | join(",")) elif (.branch // empty) then .branch else "" end')
+    if [ -z "$branches" ]; then
+        branches="main"
+    fi
+    echo "$branches"
+}
+
 check_webhook() {
     local repo=$1
     echo "Checking webhook for $repo..."
@@ -95,11 +105,12 @@ configure_webhook() {
 manual_deploy() {
     local repo=$1
     local container_name=$2
+    local branch=${3:-main}
     
-    echo "Manually triggering deployment for $repo..."
+    echo "Manually triggering deployment for $repo on branch $branch..."
     
     # Create payload
-    local payload='{"ref":"refs/heads/main","repository":{"full_name":"'$repo'"}}'
+    local payload='{"ref":"refs/heads/'"$branch"'","repository":{"full_name":"'$repo'"}}'
     
     # Calculate HMAC signature
     local signature="sha256=$(echo -n "$payload" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | cut -d' ' -f2)"
@@ -135,7 +146,8 @@ show_menu() {
     for site in $SITES; do
         local repo=$(echo "$site" | base64 -d | jq -r '.repo')
         local container=$(echo "$site" | base64 -d | jq -r '.container_name')
-        echo "  $i) $repo ($container)"
+        local branches=$(get_branches "$site")
+        echo "  $i) $repo [$branches] ($container)"
         i=$((i+1))
     done
     echo ""
@@ -153,9 +165,21 @@ check_all_webhooks() {
     echo ""
     
     local needs_config=()
+    local seen_repos=()
     
     for site in $SITES; do
         local repo=$(echo "$site" | base64 -d | jq -r '.repo')
+        local already_seen=0
+        for seen in "${seen_repos[@]}"; do
+            if [ "$seen" == "$repo" ]; then
+                already_seen=1
+                break
+            fi
+        done
+        if [ $already_seen -eq 1 ]; then
+            continue
+        fi
+        seen_repos+=("$repo")
         
         if ! check_webhook "$repo"; then
             needs_config+=("$repo")
@@ -189,13 +213,16 @@ deploy_menu() {
     local i=1
     local repos=()
     local containers=()
+    local branches=()
     
     for site in $SITES; do
         local repo=$(echo "$site" | base64 -d | jq -r '.repo')
         local container=$(echo "$site" | base64 -d | jq -r '.container_name')
-        echo "  $i) $repo"
+        local site_branches=$(get_branches "$site")
+        echo "  $i) $repo [$site_branches]"
         repos+=("$repo")
         containers+=("$container")
+        branches+=("$site_branches")
         i=$((i+1))
     done
     
@@ -209,7 +236,10 @@ deploy_menu() {
     
     local idx=$((choice-1))
     if [ $idx -ge 0 ] && [ $idx -lt ${#repos[@]} ]; then
-        manual_deploy "${repos[$idx]}" "${containers[$idx]}"
+        local branch="${branches[$idx]}"
+        # If multiple branches are configured, default to the first one.
+        branch="${branch%%,*}"
+        manual_deploy "${repos[$idx]}" "${containers[$idx]}" "$branch"
     else
         echo "Invalid selection"
     fi
@@ -249,8 +279,8 @@ case "$1" in
         ;;
     deploy)
         if [ -z "$2" ]; then
-            echo "Usage: $0 deploy <repo-name>"
-            echo "Example: $0 deploy cellect-ai/www-v0"
+            echo "Usage: $0 deploy <repo-name> [branch]"
+            echo "Example: $0 deploy cellect-ai/www-v0 preview"
             exit 1
         fi
         
@@ -258,9 +288,11 @@ case "$1" in
         for site in $SITES; do
             REPO=$(echo "$site" | base64 -d | jq -r '.repo')
             CONTAINER=$(echo "$site" | base64 -d | jq -r '.container_name')
+            BRANCHES=$(get_branches "$site")
             
             if [ "$REPO" == "$2" ]; then
-                manual_deploy "$REPO" "$CONTAINER"
+                BRANCH="${3:-${BRANCHES%%,*}}"
+                manual_deploy "$REPO" "$CONTAINER" "$BRANCH"
                 FOUND=1
                 exit 0
             fi
@@ -272,7 +304,7 @@ case "$1" in
         fi
         ;;
     *)
-        echo "Usage: $0 [check|configure|deploy <repo>]"
+        echo "Usage: $0 [check|configure|deploy <repo> [branch]]"
         echo ""
         echo "Commands:"
         echo "  check      - Check webhook configuration for all sites"
