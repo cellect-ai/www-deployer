@@ -51,10 +51,22 @@ function logError(message, meta = {}) {
     logEvent('error', message, meta);
 }
 
+function redactSecrets(text) {
+    if (typeof text !== 'string') return text;
+    return text
+        // Infisical tokens / JWTs
+        .replace(/INFISICAL_TOKEN='[^']*'/g, "INFISICAL_TOKEN='<redacted>'")
+        .replace(/--token='[^']*'/g, "--token='<redacted>'")
+        // GitHub token-in-URL
+        .replace(/https:\/\/x-access-token:[^@]+@github\.com/g, "https://x-access-token:<redacted>@github.com")
+        // Generic PAT markers
+        .replace(/github_pat_[A-Za-z0-9_]+/g, "github_pat_<redacted>");
+}
+
 function errorMeta(err) {
     if (!err) return {};
     return {
-        error: err.message,
+        error: redactSecrets(err.message),
         status: err.status,
         signal: err.signal
     };
@@ -287,11 +299,10 @@ function deploySite(repoFullName, site, sourceBranch, deployId) {
         --network ${DOCKER_NETWORK} \
         --restart unless-stopped \
         -p ${site.port}:3000 \
-        -e INFISICAL_TOKEN='${shellEscape(machineIdentityToken)}' \
         -e INFISICAL_API_URL='${shellEscape(infisicalConfig.domain)}' \
         --entrypoint infisical \
         ${imageTag} \
-        run --projectId='${shellEscape(infisicalConfig.projectId)}' --env='${shellEscape(infisicalConfig.env)}' --path='${shellEscape(infisicalConfig.secretPath)}' --domain='${shellEscape(infisicalConfig.domain)}' --command='${shellEscape(startCommand)}'`;
+        run --token='${shellEscape(machineIdentityToken)}' --projectId='${shellEscape(infisicalConfig.projectId)}' --env='${shellEscape(infisicalConfig.env)}' --path='${shellEscape(infisicalConfig.secretPath)}' --domain='${shellEscape(infisicalConfig.domain)}' --command='${shellEscape(startCommand)}'`;
             logInfo('Infisical runtime enabled', { deployId, container: site.container_name });
         }
     } else {
