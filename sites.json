@@ -81,6 +81,34 @@
       "infisical_env": "staging",
       "infisical_path": "/sites/www-shape-equity",
       "infisical_api_url": "https://sops.ops.cellect.ai/"
+    },
+    {
+      "repo": "cellect-ai/www-shape-ir",
+      "branch": "main",
+      "port": 9096,
+      "container_name": "www_shape_ir",
+      "domain": "shape-ir.com",
+      "node_version": "22",
+      "build_cmd": "npm install && npm run build",
+      "serve_cmd": "npm run start",
+      "infisical_project_id": "c02fbd52-519b-4fff-b83f-a35df765d967",
+      "infisical_env": "prod",
+      "infisical_path": "/sites/www-shape-ir",
+      "infisical_api_url": "https://sops.ops.cellect.ai/"
+    },
+    {
+      "repo": "cellect-ai/www-shape-ir",
+      "branch": "preview",
+      "port": 9097,
+      "container_name": "www_shape_ir_staging",
+      "domain": "staging.shape-ir.com",
+      "node_version": "22",
+      "build_cmd": "npm install && npm run build",
+      "serve_cmd": "npm run start",
+      "infisical_project_id": "c02fbd52-519b-4fff-b83f-a35df765d967",
+      "infisical_env": "staging",
+      "infisical_path": "/sites/www-shape-ir",
+      "infisical_api_url": "https://sops.ops.cellect.ai/"
     }
   ]
 }
